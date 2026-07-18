@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy - Glyphloop</title>
-<meta name="description" content="How Glyphloop handles imported media, product analytics, and launch-update email addresses.">
+<meta name="description" content="How Glyphloop handles imported media, product analytics, and release-note email addresses.">
 <style>
   :root { color-scheme: light; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #e7dece; color: #2b2a24; }
   body { margin: 0; }
@@ -34,8 +34,9 @@
   <button id="disable" type="button">Disable product analytics on this browser</button>
   <p id="status" aria-live="polite"></p>
 
-  <h2>Launch updates</h2>
-  <p>If you request the public-beta launch email, Glyphloop stores your email address and signup time in Cloudflare Workers KV. This information is used only to send that one email, is not included in product analytics, and will be deleted after the launch email has been sent.</p>
+  <h2>Release-note email</h2>
+  <p>If you request the 1.0 launch note, Glyphloop stores your email address, signup time, and the version of that consent in Cloudflare Workers KV. This information is used only to send one email when Glyphloop reaches 1.0, is not included in product analytics, and will be deleted after that email has been sent.</p>
+  <p>Addresses collected by the earlier public-beta launch form remain limited to that one public-beta launch email and will be deleted after it is sent. They are not silently moved onto the 1.0 list or any newsletter.</p>
 
   <h2>Open-source and command-line use</h2>
   <p>Source checkouts, the CLI, and the MCP server do not send product analytics to Glyphloop.</p>

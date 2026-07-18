@@ -54,15 +54,25 @@ describe('waitlist Worker', () => {
 
   it('normalizes and stores a valid signup', async () => {
     const bindings = env();
-    const response = await worker.fetch(signup(JSON.stringify({ email: '  Person@Example.COM ' })), bindings);
+    const response = await worker.fetch(signup(JSON.stringify({
+      email: '  Person@Example.COM ',
+      consent: 'v1-launch-note',
+    })), bindings);
     expect(response.status).toBe(200);
     expect(bindings.WAITLIST.put).toHaveBeenCalledWith('person@example.com', expect.any(String));
     const storedSignup = JSON.parse(bindings.WAITLIST.put.mock.calls[0][1]);
-    expect(storedSignup).toEqual({ at: expect.any(String) });
+    expect(storedSignup).toEqual({ at: expect.any(String), consent: 'v1-launch-note' });
     expect(bindings.PRODUCT_ANALYTICS.writeDataPoint).toHaveBeenCalledWith(
       expect.objectContaining({ blobs: expect.arrayContaining(['waitlist_submitted']) }),
     );
     expect(response.headers.get('cache-control')).toBe('no-store');
+  });
+
+  it('keeps cached public-beta forms on their original one-email consent', async () => {
+    const bindings = env();
+    await worker.fetch(signup(JSON.stringify({ email: 'legacy@example.com' })), bindings);
+    const storedSignup = JSON.parse(bindings.WAITLIST.put.mock.calls[0][1]);
+    expect(storedSignup).toEqual({ at: expect.any(String), consent: 'public-beta-launch-note' });
   });
 
   it('silently accepts the honeypot without writing', async () => {
@@ -139,6 +149,21 @@ describe('product analytics Worker', () => {
     expect(stored.blobs[3]).toBe('custom');
     expect(JSON.stringify(stored)).not.toContain('Client Name');
     expect(JSON.stringify(stored)).not.toContain('do not store me');
+  });
+
+  it('accepts the public GitHub route as a fixed-schema event', async () => {
+    const bindings = env();
+    const response = await worker.fetch(productEvent({
+      name: 'github_opened',
+      path: '/',
+      properties: { href: 'https://github.com/ideoshi/glyphloop' },
+    }), bindings);
+    expect(response.status).toBe(204);
+    expect(bindings.PRODUCT_ANALYTICS.writeDataPoint).toHaveBeenCalledWith({
+      indexes: [anonymousId],
+      blobs: ['github_opened', sessionId, '/', '', '', '', '', '0.1.0-beta.0'],
+      doubles: [0, 0, 0],
+    });
   });
 
   it('rejects unknown events, identifiers, paths, origins, and content types', async () => {

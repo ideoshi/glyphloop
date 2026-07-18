@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Glyphloop - loops that move like water</title>
-<meta name="description" content="Glyphloop turns math, your images, and your text into ASCII animations that repeat forever without a seam, and keep the colors of whatever they run across.">
-<meta property="og:title" content="Glyphloop">
-<meta property="og:description" content="ASCII animations that loop perfectly, inherit your colors, and can be made by your AI.">
+<title>Glyphloop - loop-perfect ASCII animation</title>
+<meta name="description" content="Create loop-perfect ASCII animations from math, images, video, and text. Try the public beta in your browser or use the open-source CLI and MCP server.">
+<meta property="og:title" content="Glyphloop public beta">
+<meta property="og:description" content="Create loop-perfect ASCII animations in the browser, from the CLI, or with your AI agent.">
 <meta property="og:image" content="https://glyphloop.art/og.png">
 <meta property="og:url" content="https://glyphloop.art">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍩</text></svg>">
@@ -199,8 +199,11 @@ h1 em, h2 em { font-style: italic; font-weight: 400; }
 #waitlist .wrap { padding: 120px 40px; text-align: center; }
 #waitlist h2 { font-size: clamp(34px, 6vw, 72px); line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 20px; }
 #waitlist .lede { font-size: 21px; line-height: 1.5; max-width: 50ch; margin: 0 auto 30px; }
-.studio-link { display: inline-block; color: #1c1f24; background: var(--amber); border: 1px solid #c8824c; margin-bottom: 46px; }
+.launch-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 46px; }
+.studio-link { display: inline-block; color: #1c1f24; background: var(--amber); border: 1px solid #c8824c; }
 .studio-link:hover { background: #eab079; }
+.github-link { display: inline-block; color: var(--ink); background: transparent; border: 1px solid rgba(43,42,36,0.45); }
+.github-link:hover { border-color: var(--ink); background: rgba(43,42,36,0.04); }
 .wl-invite { margin: 0 0 16px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
 .wl-form { display: flex; gap: 12px; max-width: 480px; margin: 0 auto; align-items: stretch; flex-wrap: wrap; justify-content: center; }
 .wl-form input[type='email'] { flex: 1; min-width: 240px; font-family: var(--mono); font-size: 14px; color: var(--ink); background: #f6f0e3; border: 1px solid rgba(43,42,36,0.4); padding: 0 16px; height: 48px; }
@@ -255,6 +258,7 @@ footer .row a { color: var(--amber); }
       <a href="#loops">Loops</a>
       <a href="#export">Export</a>
       <a href="#agents">Agents</a>
+      <a href="https://github.com/ideoshi/glyphloop" data-event="github_opened">GitHub</a>
       <a class="cta" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
     </nav>
   </div>
@@ -266,14 +270,14 @@ footer .row a { color: var(--amber); }
   <div class="hero-vignette-l"></div>
   <div class="grain"></div>
   <div class="hero-inner">
-    <div class="eyebrow"><span style="color:var(--amber)">00</span> &nbsp;Ambient ASCII, rendered like weather</div>
+    <div class="eyebrow"><span style="color:var(--amber)">00</span> &nbsp;Public beta is live</div>
     <h1>Loops that move <em>like water.</em></h1>
     <p class="lede">Glyphloop turns math, your images, and your text into animations that repeat forever without a seam, and keep the colors of whatever they run across.</p>
-    <div class="term-line"><span class="host">glyphloop</span><span class="p">$</span>compose --over ship.jpg<span class="cursor"></span></div>
+    <div class="term-line"><span class="p">$</span>npx glyphloop@beta render --preset flowfield-hero --out hero<span class="cursor"></span></div>
     <div class="btns">
       <a class="btn btn-solid" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
+      <a class="btn btn-ghost" href="https://github.com/ideoshi/glyphloop" data-event="github_opened">View on GitHub</a>
       <a class="btn btn-ghost" href="#sources">Explore examples</a>
-      <a class="btn btn-ghost" href="#waitlist">Get the launch email</a>
     </div>
   </div>
   <div class="hero-hint">This is a painting, processed by Glyphloop into living text. Its colors are kept, cell by cell, and the loop never seams.</div>
@@ -442,17 +446,20 @@ footer .row a { color: var(--amber); }
 
 <section id="waitlist" class="light">
   <div class="wrap">
-    <div class="mono-label eyebrow"><span class="num">06</span> &nbsp;The studio is open</div>
+    <div class="mono-label eyebrow"><span class="num">06</span> &nbsp;Public beta is live</div>
     <h2>Make your <em>first loop.</em></h2>
     <p class="lede">Start with a preset, drop in an image or change a phrase, and export a website-ready animation. No account required.</p>
-    <a class="btn studio-link" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
-    <p class="wl-invite">Get one email when the public beta launches. No newsletter.</p>
+    <div class="launch-actions">
+      <a class="btn studio-link" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
+      <a class="btn github-link" href="https://github.com/ideoshi/glyphloop" data-event="github_opened">View source on GitHub</a>
+    </div>
+    <p class="wl-invite">Want the 1.0 launch note? One email when Glyphloop graduates from beta. Nothing else.</p>
     <form class="wl-form" id="wl-form">
       <input type="email" name="email" placeholder="you@studio.com" autocomplete="email" required aria-label="Email address">
       <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button type="submit">Email me at launch</button>
+      <button type="submit">Email me at 1.0</button>
     </form>
-    <div class="wl-done" id="wl-done"><span class="s">//</span> you're on the list. we'll email you when the public beta launches.</div>
+    <div class="wl-done" id="wl-done"><span class="s">//</span> you're on the list. we'll email you once, when Glyphloop reaches 1.0.</div>
     <div class="wl-error" id="wl-error"></div>
     <div class="wl-dots">&bull; &bull; &bull;</div>
   </div>
@@ -463,7 +470,7 @@ footer .row a { color: var(--amber); }
     <img class="mark" src="wordmark.png" alt="Glyphloop">
     <p class="tag">glyphs, and seamless loops.</p>
     <div class="row">
-      <span>Made with Glyphloop, obviously. An <a href="https://ideoshi.com">ideoshi</a> project. <a href="/privacy.html">Privacy</a>.</span>
+      <span>Made with Glyphloop, obviously. An <a href="https://ideoshi.com">ideoshi</a> project. <a href="https://github.com/ideoshi/glyphloop">GitHub</a>. <a href="/privacy.html">Privacy</a>.</span>
       <span>&copy; 2026 Ideoshi</span>
     </div>
   </div>
