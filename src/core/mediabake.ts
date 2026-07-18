@@ -1,6 +1,7 @@
 import type { BaseFrame } from './compose';
-import { fitRect, type MediaFit } from './cover';
+import { fitRect, type FitDest, type MediaFit } from './cover';
 import { assertImageDimensions, assertMediaBakeBudget, assertMediaFile } from './guardrails';
+import { CHAR_ASPECT } from './render';
 
 /**
  * Media (video/image) bake: decode once into per-cell brightness AND color
@@ -16,14 +17,86 @@ interface Baked {
   scale: number;
   name: string;
   seconds: number;
+  sourceWidth: number;
+  sourceHeight: number;
 }
 
 let baked: Baked | null = null;
 let lastFile: File | null = null;
 let baking = false;
 
-export function bakedInfo(): { name: string; seconds: number; frames: number } | null {
-  return baked ? { name: baked.name, seconds: baked.seconds, frames: baked.frames.length } : null;
+export interface MediaDimensions {
+  width: number;
+  height: number;
+}
+
+export interface VideoMetadataElement {
+  onloadedmetadata: HTMLVideoElement['onloadedmetadata'];
+  onerror: HTMLVideoElement['onerror'];
+  src: string;
+  error: { message: string } | null;
+}
+
+/** Attach handlers before setting src so fast local blob loads cannot race us. */
+export function loadVideoMetadata(video: VideoMetadataElement, url: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      video.onloadedmetadata = null;
+      video.onerror = null;
+    };
+    video.onloadedmetadata = () => {
+      cleanup();
+      resolve();
+    };
+    video.onerror = () => {
+      const detail = video.error?.message;
+      cleanup();
+      reject(new Error(detail ? `Could not decode video: ${detail}` : 'Could not decode video'));
+    };
+    video.src = url;
+  });
+}
+
+export function bakedInfo(): {
+  name: string;
+  seconds: number;
+  frames: number;
+  width: number;
+  height: number;
+} | null {
+  return baked ? {
+    name: baked.name,
+    seconds: baked.seconds,
+    frames: baked.frames.length,
+    width: baked.sourceWidth,
+    height: baked.sourceHeight,
+  } : null;
+}
+
+/** Read native media dimensions before baking so the editor can match them. */
+export async function mediaDimensions(file: File): Promise<MediaDimensions> {
+  const kind = assertMediaFile(file);
+  if (kind === 'image') {
+    const img = await createImageBitmap(file);
+    try {
+      assertImageDimensions(img.width, img.height);
+      return { width: img.width, height: img.height };
+    } finally {
+      img.close();
+    }
+  }
+
+  const url = URL.createObjectURL(file);
+  try {
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    await loadVideoMetadata(video, url);
+    assertImageDimensions(video.videoWidth, video.videoHeight);
+    return { width: video.videoWidth, height: video.videoHeight };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 export function needsRebake(cols: number, rows: number, fit: MediaFit = 'cover', scale = 1): boolean {
@@ -51,6 +124,21 @@ export function mediaBaseFrame(phase: number, cols: number, rows: number): BaseF
 
 /** Supersampling factor: cells keep vivid accents instead of averaging them away. */
 const BAKE_SS = 6;
+
+/**
+ * Fit media into the square-pixel bake grid while accounting for the fact
+ * that the rendered glyph cells are only half as wide as they are tall.
+ */
+export function mediaFitRect(
+  srcW: number,
+  srcH: number,
+  canvasW: number,
+  canvasH: number,
+  fit: MediaFit,
+  scale: number,
+): FitDest {
+  return fitRect(srcW / CHAR_ASPECT, srcH, canvasW, canvasH, fit, scale);
+}
 
 function frameFromCanvas(ctx: CanvasRenderingContext2D, cols: number, rows: number): BaseFrame {
   const w = cols * BAKE_SS, h = rows * BAKE_SS;
@@ -116,7 +204,7 @@ export async function bakeFile(
       // whole-image dest rect: contain letterboxes (black), cover overflows
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, w, h);
-      const d = fitRect(srcW, srcH, w, h, fit, scale);
+      const d = mediaFitRect(srcW, srcH, w, h, fit, scale);
       ctx.drawImage(src, d.dx, d.dy, d.dw, d.dh);
     };
 
@@ -125,13 +213,18 @@ export async function bakeFile(
         // createImageBitmap decodes off the render lifecycle (img.decode()
         // can stall indefinitely in throttled/background tabs).
         const img = await createImageBitmap(file);
+        const sourceWidth = img.width;
+        const sourceHeight = img.height;
         try {
-          assertImageDimensions(img.width, img.height);
-          draw(img, img.width, img.height);
+          assertImageDimensions(sourceWidth, sourceHeight);
+          draw(img, sourceWidth, sourceHeight);
         } finally {
           img.close();
         }
-        baked = { frames: [frameFromCanvas(ctx, cols, rows)], cols, rows, fit, scale, name: file.name, seconds: 0 };
+        baked = {
+          frames: [frameFromCanvas(ctx, cols, rows)], cols, rows, fit, scale,
+          name: file.name, seconds: 0, sourceWidth, sourceHeight,
+        };
         lastFile = file;
         onProgress?.(1, 1);
         return { seconds: 0, frames: 1 };
@@ -140,11 +233,7 @@ export async function bakeFile(
       const video = document.createElement('video');
       video.muted = true;
       video.playsInline = true;
-      video.src = url;
-      await new Promise<void>((resolve, reject) => {
-        video.onloadedmetadata = () => resolve();
-        video.onerror = () => reject(new Error('Could not decode video'));
-      });
+      await loadVideoMetadata(video, url);
       if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error('Video has an invalid duration');
       const seconds = Math.min(video.duration, MAX_SECONDS);
       assertMediaBakeBudget(cols, rows, fps, seconds);
@@ -161,7 +250,10 @@ export async function bakeFile(
         frames.push(frameFromCanvas(ctx, cols, rows));
         onProgress?.(i + 1, total);
       }
-      baked = { frames, cols, rows, fit, scale, name: file.name, seconds };
+      baked = {
+        frames, cols, rows, fit, scale, name: file.name, seconds,
+        sourceWidth: video.videoWidth, sourceHeight: video.videoHeight,
+      };
       lastFile = file;
       return { seconds, frames: total };
     } finally {

@@ -6,7 +6,10 @@ import { RAMPS, type MapperConfig } from '../core/mapper';
 import { CanvasRenderer, rowsFor, FONT } from '../core/render';
 import { SOURCES, sourceById } from '../sources';
 import { SceneRenderer } from '../core/scene';
-import { bakeFile, rebake, needsRebake, isBaking, bakedInfo, bakedColors } from '../core/mediabake';
+import {
+  bakeFile, rebake, needsRebake, isBaking, bakedInfo, bakedColors, mediaDimensions,
+  type MediaDimensions,
+} from '../core/mediabake';
 import type { MediaFit } from '../core/cover';
 import { extractPalette, suggestInks } from '../core/palette';
 import type { BlendMode } from '../core/compose';
@@ -126,7 +129,7 @@ export function mountApp(root: HTMLElement): void {
   const firstRun = el('div', 'first-run');
   firstRun.setAttribute('role', 'note');
   firstRun.append(
-    el('strong', 'first-run-title', 'Make your first loop'),
+    el('strong', 'first-run-title', 'Make your first animation'),
     el('span', 'first-run-copy', 'Paste or drop an image → inherit its colours → choose motion → export.'),
   );
   const firstRunActions = el('span', 'first-run-actions');
@@ -151,12 +154,12 @@ export function mountApp(root: HTMLElement): void {
   try { firstRun.hidden = localStorage.getItem('glyphloop-onboarding-dismissed') === '1'; } catch { /* optional */ }
   dismissBtn.addEventListener('click', dismissFirstRun);
 
-  const rebuildGrid = () => {
+  const rebuildGrid = (rebakeMedia = true) => {
     const rows = rowsFor(state.cols, state.aspect);
     grid = new FieldFrame(state.cols, rows);
     colorGrid = new Uint8Array(state.cols * rows * 3);
     scene = new SceneRenderer(state.cols, rows);
-    if (state.base.type === 'media' && needsRebake(state.cols, rows, mediaFit(), mediaScale()) && !isBaking()) {
+    if (rebakeMedia && state.base.type === 'media' && needsRebake(state.cols, rows, mediaFit(), mediaScale()) && !isBaking()) {
       rebake(state.cols, rows, state.fps, mediaFit(), mediaScale())
         .then(() => toast('Media re-baked for new grid'))
         .catch((e) => toast(`Re-bake failed: ${(e as Error).message}`, 'error'));
@@ -200,6 +203,18 @@ export function mountApp(root: HTMLElement): void {
   let setDuration: (v: number) => void = () => {};
   let applyInks: (inks: { fg: string; fg2: string; bg: string }) => void = () => {};
   let refreshLayers: () => void = () => {};
+  let refreshAspectControl: () => void = () => {};
+  let refreshExportSourceSize: () => void = () => {};
+  let sourceSize: MediaDimensions | null = null;
+  let inksBeforeMediaPalette: { fg: string; fg2: string; bg: string } | null = null;
+
+  const matchSourceAspect = (dimensions: MediaDimensions) => {
+    sourceSize = dimensions;
+    state.aspect = dimensions.width / dimensions.height;
+    rebuildGrid(false);
+    refreshAspectControl();
+    refreshExportSourceSize();
+  };
 
   /** Auto-capture a still image as the underlay source; videos clear it (v1). */
   const captureUnderlay = async (file: File) => {
@@ -286,7 +301,7 @@ export function mountApp(root: HTMLElement): void {
       const status = el('div', 'media-status');
       const info = bakedInfo();
       status.textContent = info
-        ? `${info.name} - ${info.frames} frames${info.seconds ? `, ${info.seconds.toFixed(1)}s` : ''}`
+        ? `${info.name} - ${info.width}×${info.height}, ${info.frames} frames${info.seconds ? `, ${info.seconds.toFixed(1)}s` : ''}`
         : 'No file loaded';
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
@@ -300,15 +315,19 @@ export function mountApp(root: HTMLElement): void {
         try {
           const kind = assertMediaFile(file);
           track('media_import_started', { kind, via: 'picker' });
-          status.textContent = 'Baking…';
+          status.textContent = 'Reading media…';
+          const dimensions = await mediaDimensions(file);
+          matchSourceAspect(dimensions);
+          status.textContent = `Baking ${dimensions.width}×${dimensions.height}…`;
           const rows = rowsFor(state.cols, state.aspect);
           const result = await bakeFile(file, state.cols, rows, state.fps, (done, total) => {
             status.textContent = `Baking ${done}/${total}…`;
           }, mediaFit(), mediaScale());
           if (result.seconds > 0) setDuration(Math.min(20, Math.max(2, result.seconds)));
           await captureUnderlay(file);
-          status.textContent = `${file.name} - ${result.frames} frames${result.seconds ? `, ${result.seconds.toFixed(1)}s` : ''}`;
-          toast('Media baked');
+          status.textContent = `${file.name} - ${dimensions.width}×${dimensions.height}, ${result.frames} frames${result.seconds ? `, ${result.seconds.toFixed(1)}s` : ''}`;
+          refreshExportSourceSize();
+          toast(`Media baked at source aspect (${dimensions.width}×${dimensions.height})`);
           dismissFirstRun();
           track('media_import_completed', { kind, via: 'picker' });
         } catch (e) {
@@ -318,14 +337,31 @@ export function mountApp(root: HTMLElement): void {
         }
       });
       const paletteBtn = el('button', 'btn', '🎨 Set ink & paper from image');
+      const undoPaletteBtn = el('button', 'btn', '↩ Undo image palette');
+      undoPaletteBtn.disabled = !inksBeforeMediaPalette;
       paletteBtn.addEventListener('click', () => {
         const colors = bakedColors();
         if (!colors) {
           toast('Load an image or video first', 'error');
           return;
         }
+        if (!inksBeforeMediaPalette) {
+          inksBeforeMediaPalette = {
+            fg: state.mapper.fg,
+            fg2: state.mapper.fg2,
+            bg: state.mapper.bg,
+          };
+        }
         applyInks(suggestInks(extractPalette(colors, 5)));
+        undoPaletteBtn.disabled = false;
         toast('Palette applied from media');
+      });
+      undoPaletteBtn.addEventListener('click', () => {
+        if (!inksBeforeMediaPalette) return;
+        applyInks(inksBeforeMediaPalette);
+        inksBeforeMediaPalette = null;
+        undoPaletteBtn.disabled = true;
+        toast('Previous ink & paper restored');
       });
       const fitSelect = selectInput(['cover', 'contain', 'stretch'], mediaFit(), (v) => {
         state.base.fit = v as MediaFit;
@@ -338,7 +374,7 @@ export function mountApp(root: HTMLElement): void {
       baseBody.append(
         labeled('', pick), status, fileInput,
         labeled('Fit', fitSelect), scaleRow,
-        labeled('', paletteBtn),
+        labeled('', paletteBtn), labeled('', undoPaletteBtn),
       );
     }
   };
@@ -500,12 +536,31 @@ export function mountApp(root: HTMLElement): void {
   gridSection.body.appendChild(
     labeled('Cell size', rangeInput(6, 28, 1, state.cellH, (v) => (state.cellH = v))),
   );
-  gridSection.body.appendChild(
-    labeled('Aspect', selectInput(Object.keys(ASPECTS), '16:9', (v) => {
+  const aspectSelect = selectInput([...Object.keys(ASPECTS), 'source'], '16:9', (v) => {
+    if (v === 'source') {
+      if (!sourceSize) return;
+      state.aspect = sourceSize.width / sourceSize.height;
+    } else {
       state.aspect = ASPECTS[v];
-      rebuildGrid();
-    })),
-  );
+    }
+    rebuildGrid();
+    refreshAspectControl();
+    refreshExportSourceSize();
+  });
+  const sourceAspectOption = aspectSelect.options[aspectSelect.options.length - 1];
+  refreshAspectControl = () => {
+    sourceAspectOption.disabled = !sourceSize;
+    sourceAspectOption.textContent = sourceSize
+      ? `Source (${sourceSize.width}×${sourceSize.height})`
+      : 'Source (load media)';
+    const sourceAspect = sourceSize ? sourceSize.width / sourceSize.height : 0;
+    const named = Object.keys(ASPECTS).find((key) => Math.abs(ASPECTS[key] - state.aspect) < 0.0001);
+    aspectSelect.value = sourceSize && Math.abs(sourceAspect - state.aspect) < 0.0001
+      ? 'source'
+      : named ?? '16:9';
+  };
+  refreshAspectControl();
+  gridSection.body.appendChild(labeled('Aspect', aspectSelect));
 
   // ---- playback section ----
   const playSection = section('Playback');
@@ -526,7 +581,7 @@ export function mountApp(root: HTMLElement): void {
   playSection.body.appendChild(labeled('', playBtn));
   playSection.body.appendChild(labeled('Scrub', scrub));
   playSection.body.appendChild(
-    labeled('Loop (s)', rangeInput(2, 20, 0.5, state.duration, (v) => (state.duration = v), (input, valEl) => {
+    labeled('Duration (s)', rangeInput(2, 20, 0.5, state.duration, (v) => (state.duration = v), (input, valEl) => {
       setDuration = (v: number) => {
         state.duration = v;
         input.value = String(v);
@@ -557,10 +612,11 @@ export function mountApp(root: HTMLElement): void {
 
   // ---- export section ----
   const exportSection = section('Export');
-  buildExportPanel(exportSection.body, state, () => t, (event) => {
+  const exportPanel = buildExportPanel(exportSection.body, state, () => t, (event) => {
     const { name, ...properties } = event;
     track(name, properties);
-  });
+  }, () => sourceSize);
+  refreshExportSourceSize = exportPanel.refreshSourceSize;
 
   panel.append(baseSection.root, srcSection.root, blendSection.root, styleSection.root, fxSection.root, layersSection.root, gridSection.root, playSection.root, seedSection.root, exportSection.root);
 
@@ -620,8 +676,9 @@ export function mountApp(root: HTMLElement): void {
     syncControl(layersSection.root, 'ASCII opacity', state.layers.animOpacity);
     syncControl(gridSection.root, 'Columns', state.cols);
     syncControl(gridSection.root, 'Cell size', state.cellH);
-    syncControl(gridSection.root, 'Aspect', Object.keys(ASPECTS).find((key) => Math.abs(ASPECTS[key] - state.aspect) < 0.0001) ?? '16:9');
-    syncControl(playSection.root, 'Loop (s)', state.duration);
+    refreshAspectControl();
+    refreshExportSourceSize();
+    syncControl(playSection.root, 'Duration (s)', state.duration);
     syncControl(playSection.root, 'FPS', state.fps);
     syncControl(playSection.root, 'Speed', state.speed);
     refreshLayers();
@@ -753,18 +810,21 @@ export function mountApp(root: HTMLElement): void {
     refreshBase();
     const status = () => document.querySelector('.media-status');
     try {
+      const dimensions = await mediaDimensions(file);
+      matchSourceAspect(dimensions);
       const rows = rowsFor(state.cols, state.aspect);
       const result = await bakeFile(file, state.cols, rows, state.fps, (done, total) => {
         const el = status();
         if (el) el.textContent = `Baking ${done}/${total}…`;
-      });
+      }, mediaFit(), mediaScale());
       if (result.seconds > 0) setDuration(Math.min(20, Math.max(2, result.seconds)));
       await captureUnderlay(file);
       state.mapper.colorMode = 'source';
       colorModeSelect.value = 'source';
       refreshBase();
+      refreshExportSourceSize();
       dismissFirstRun();
-      toast(`${file.name} imported - colors inherited (color mode: source)`);
+      toast(`${file.name} imported at ${dimensions.width}×${dimensions.height} - colors inherited`);
       track('media_import_completed', { kind, via: 'drop-or-paste' });
     } catch (e) {
       toast(`Import failed: ${(e as Error).message}`, 'error');
@@ -799,7 +859,16 @@ export function mountApp(root: HTMLElement): void {
       scrub.value = String(t / state.duration);
     }
     scene.render(state, t % state.duration, grid, colorGrid);
-    renderer.draw(grid, state.mapper, { cols: state.cols, cellH: state.cellH, font: FONT }, { colorGrid, fx: state.fx, layers: layerBitmaps(state.layers) });
+    const atSourceAspect = sourceSize
+      && Math.abs(state.aspect - sourceSize.width / sourceSize.height) < 0.0001;
+    const previewWidth = Math.round(state.cols * state.cellH * 0.5);
+    renderer.draw(grid, state.mapper, {
+      cols: state.cols,
+      cellH: state.cellH,
+      font: FONT,
+      outputWidth: atSourceAspect ? previewWidth : undefined,
+      outputHeight: atSourceAspect ? Math.round(previewWidth / state.aspect) : undefined,
+    }, { colorGrid, fx: state.fx, layers: layerBitmaps(state.layers) });
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

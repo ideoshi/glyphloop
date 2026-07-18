@@ -5,7 +5,7 @@ import { preloadLayerImages } from '../core/layerimg';
 
 export async function exportGif(state: AppState, opts: ExportOpts): Promise<Blob> {
   await preloadLayerImages(state.layers);
-  const fr = new FrameRenderer(state, opts.scale);
+  const fr = new FrameRenderer(state, opts.scale, false, opts.targetSize);
   const times = frameTimes(state.fps, state.duration);
   const gif = GIFEncoder();
   const delay = 1000 / state.fps;

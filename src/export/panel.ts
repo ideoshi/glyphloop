@@ -7,8 +7,13 @@ import { exportMp4, mp4Supported } from './mp4';
 import { exportEmbed } from './embed';
 import { exportTerminal } from './terminal';
 import { assertExportBudget } from '../core/guardrails';
+import type { RasterSize } from '../core/render';
 
 type Format = 'png' | 'gif' | 'mp4' | 'embed' | 'terminal';
+
+export function sourceAspectMatches(aspect: number, sourceSize: RasterSize | null): boolean {
+  return !!sourceSize && Math.abs(aspect - sourceSize.width / sourceSize.height) < 0.0001;
+}
 
 export type ExportEvent =
   | { name: 'export_started'; format: Format }
@@ -37,15 +42,16 @@ export function buildExportPanel(
   state: AppState,
   getT: () => number,
   onEvent?: (event: ExportEvent) => void,
-): void {
+  getSourceSize?: () => RasterSize | null,
+): { refreshSourceSize: () => void } {
   const row = document.createElement('div');
   row.className = 'control-row';
 
   const format = document.createElement('select');
   const formats: [Format, string, boolean][] = [
     ['png', 'PNG (frame)', true],
-    ['gif', 'GIF (loop)', true],
-    ['mp4', 'MP4 (loop)', mp4Supported()],
+    ['gif', 'GIF (animation)', true],
+    ['mp4', 'MP4 (animation)', mp4Supported()],
     ['embed', 'Web embed (zip)', true],
     ['terminal', 'Terminal (zip)', true],
   ];
@@ -67,6 +73,19 @@ export function buildExportPanel(
   scale.value = '2';
 
   row.append(format, scale);
+
+  const matchRow = document.createElement('label');
+  matchRow.className = 'control-row';
+  const matchSource = document.createElement('input');
+  matchSource.type = 'checkbox';
+  matchSource.disabled = true;
+  const matchLabel = document.createElement('span');
+  matchLabel.className = 'control-label';
+  matchLabel.textContent = 'Match source';
+  const matchValue = document.createElement('span');
+  matchValue.className = 'control-hint';
+  matchValue.textContent = 'Load media first';
+  matchRow.append(matchLabel, matchSource, matchValue);
 
   const alphaRow = document.createElement('label');
   alphaRow.className = 'control-row';
@@ -94,7 +113,28 @@ export function buildExportPanel(
   progress.appendChild(bar);
   progress.style.display = 'none';
 
-  container.append(row, alphaRow, btnRow, progress);
+  container.append(row, matchRow, alphaRow, btnRow, progress);
+
+  let sourceSize: RasterSize | null = null;
+  let matchPreferenceSet = false;
+  const isRaster = () => ['png', 'gif', 'mp4'].includes(format.value);
+  const refreshMatchControl = () => {
+    sourceSize = getSourceSize?.() ?? null;
+    const aspectMatches = sourceAspectMatches(state.aspect, sourceSize);
+    matchSource.disabled = !sourceSize || !isRaster() || !aspectMatches;
+    if (sourceSize && !aspectMatches) matchSource.checked = false;
+    else if (sourceSize && !matchPreferenceSet) matchSource.checked = true;
+    matchValue.textContent = sourceSize
+      ? `${sourceSize.width}×${sourceSize.height}${isRaster() ? (aspectMatches ? '' : ' (aspect mismatch)') : ' (raster only)'}`
+      : 'Load media first';
+    scale.disabled = !!sourceSize && matchSource.checked && isRaster();
+  };
+  matchSource.addEventListener('change', () => {
+    matchPreferenceSet = true;
+    refreshMatchControl();
+  });
+  format.addEventListener('change', refreshMatchControl);
+  refreshMatchControl();
 
   let signal = { aborted: false };
 
@@ -110,18 +150,21 @@ export function buildExportPanel(
   exportBtn.addEventListener('click', async () => {
     const fmt = format.value as Format;
     const sc = Number(scale.value);
+    refreshMatchControl();
+    const targetSize = isRaster() && matchSource.checked ? sourceSize ?? undefined : undefined;
     signal = { aborted: false };
     const opts: ExportOpts = {
       scale: sc,
+      targetSize,
       signal,
       onProgress: (done, total) => (bar.style.width = `${Math.round((done / total) * 100)}%`),
     };
     setBusy(true);
     onEvent?.({ name: 'export_started', format: fmt });
     try {
-      assertExportBudget(state, fmt, sc);
+      assertExportBudget(state, fmt, sc, targetSize);
       if (fmt === 'png') {
-        const blob = await exportPng(state, getT(), sc, alphaCheck.checked);
+        const blob = await exportPng(state, getT(), sc, alphaCheck.checked, targetSize);
         downloadBlob(blob, 'ascii.png');
         toast('PNG exported');
         onEvent?.({ name: 'export_completed', format: fmt, bytes: blob.size });
@@ -141,4 +184,6 @@ export function buildExportPanel(
       setBusy(false);
     }
   });
+
+  return { refreshSourceSize: refreshMatchControl };
 }

@@ -19,7 +19,7 @@ async function pickCodec(width: number, height: number, fps: number): Promise<st
 
 export async function exportMp4(state: AppState, opts: ExportOpts): Promise<Blob> {
   await preloadLayerImages(state.layers);
-  const fr = new FrameRenderer(state, opts.scale);
+  const fr = new FrameRenderer(state, opts.scale, false, opts.targetSize);
   // H.264 requires even dimensions; render once to learn the size, then pad.
   fr.render(0);
   const width = Math.ceil(fr.canvas.width / 2) * 2;

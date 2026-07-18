@@ -2,7 +2,7 @@
 
 # Glyphloop
 
-A browser studio and headless toolkit for creating **loop-perfect ambient ASCII
+A browser studio and headless toolkit for creating **loop-perfect generative ASCII
 animations**: flow fields, wave interference, morphing noise blobs, matrix
 rain, rotating 3D shapes, custom math expressions, and parametric surfaces.
 Layer effects over images, video, or text, inherit their colors, and export to
@@ -53,11 +53,13 @@ Run `node bin/glyphloop.js --help` for the complete command summary.
    colors intact.
 2. Style it: character ramp (or type your own), gamma, invert, mono or
    two-color gradient.
-3. Set grid columns, cell size, aspect ratio, loop duration, and FPS.
+3. Set grid columns, cell size, aspect ratio, duration, and FPS. Imported media
+   starts at its native aspect ratio, and raster exports can match its exact
+   pixel dimensions.
 4. **Export**:
    - **PNG** - current frame, at 1–3× scale.
-   - **GIF / MP4** - one full loop, rendered deterministically frame-by-frame
-     (never drops frames), seamless when it wraps.
+   - **GIF / MP4** - one animation pass, rendered deterministically
+     frame-by-frame (never drops frames). Generated motion wraps seamlessly.
    - **Web embed (zip)** - `frames.json` (RLE-compressed character frames) +
      `player.js` (tiny dependency-free player, honors
      `prefers-reduced-motion`) + a demo `index.html`. Drop the two files into
@@ -92,16 +94,25 @@ These are two different ways to color imported media:
   render with those curated colors instead of retaining every source color.
 
 In short: source mode preserves the image's color map; the palette action uses
-the image as inspiration for a controlled Glyphloop color scheme.
+the image as inspiration for a controlled Glyphloop color scheme. The Studio's
+**Undo image palette** action restores the exact ink and paper colors that were
+set before palette extraction.
 
-## Why loops are seamless
+## Why generated loops are seamless
 
-Sources are pure functions of time with no per-frame state. All noise is
+Glyphloop's built-in sources and periodic expressions are pure functions of
+time with no per-frame state. All noise is
 sampled along a circle in two extra noise dimensions
 (`src/core/noise.ts:loopCoords`), and all sine phases advance by integer
 multiples of 2π per loop - so frame N wraps back to frame 0 exactly. Exports
 render `round(fps × duration)` frames starting at t=0 and never render
 t=duration (frame 0 *is* the wrap).
+
+Imported video is not made loop-perfect automatically. Glyphloop samples one
+pass of the clip across the animation duration, then playback repeats from the
+start. The composite is seamless only when the source video was already
+designed to loop, as in the Claude jellyfish example, or when the imported base
+is a still image.
 
 ## Development
 

@@ -1,4 +1,4 @@
-import { rowsFor } from './render';
+import { rowsFor, type RasterSize } from './render';
 import type { AppState } from './state';
 
 const MIB = 1024 * 1024;
@@ -65,8 +65,13 @@ export function assertPresetFile(file: Pick<FileLike, 'size'>): void {
   }
 }
 
-export function exportDimensions(state: AppState, scale: number): { width: number; height: number; rows: number } {
+export function exportDimensions(
+  state: AppState,
+  scale: number,
+  targetSize?: RasterSize,
+): { width: number; height: number; rows: number } {
   const rows = rowsFor(state.cols, state.aspect);
+  if (targetSize) return { width: targetSize.width, height: targetSize.height, rows };
   const cellH = Math.round(state.cellH * scale);
   return {
     width: Math.round(state.cols * cellH * 0.5),
@@ -75,9 +80,14 @@ export function exportDimensions(state: AppState, scale: number): { width: numbe
   };
 }
 
-export function assertExportBudget(state: AppState, format: GuardedExportFormat, scale: number): void {
+export function assertExportBudget(
+  state: AppState,
+  format: GuardedExportFormat,
+  scale: number,
+  targetSize?: RasterSize,
+): void {
   const frames = Math.max(1, Math.round(state.fps * state.duration));
-  const { width, height, rows } = exportDimensions(state, scale);
+  const { width, height, rows } = exportDimensions(state, scale, targetSize);
   const pixels = width * height;
 
   if (format === 'png' || format === 'gif' || format === 'mp4') {

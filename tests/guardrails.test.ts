@@ -48,6 +48,17 @@ describe('export guardrails', () => {
     expect(exportDimensions(state, 2)).toEqual({ width: 1960, height: 1092, rows: 39 });
   });
 
+  it('uses exact imported-media dimensions when requested', () => {
+    const state = defaultState();
+    state.aspect = 1408 / 640;
+    expect(exportDimensions(state, 3, { width: 1408, height: 640 })).toEqual({
+      width: 1408,
+      height: 640,
+      rows: 32,
+    });
+    expect(() => assertExportBudget(state, 'mp4', 3, { width: 1408, height: 640 })).not.toThrow();
+  });
+
   it('accepts the default export workload', () => {
     const state = defaultState();
     for (const format of ['png', 'gif', 'mp4', 'embed', 'terminal'] as const) {
