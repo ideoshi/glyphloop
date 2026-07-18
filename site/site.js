@@ -336,7 +336,7 @@
     });
   });
 
-  // ---- waitlist ----
+  // ---- one-time 1.0 release note ----
   var form = document.getElementById('wl-form');
   var done = document.getElementById('wl-done');
   var error = document.getElementById('wl-error');
@@ -351,6 +351,7 @@
       body: JSON.stringify({
         email: form.email.value,
         company: form.company.value,
+        consent: 'v1-launch-note',
       }),
     })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
@@ -358,7 +359,6 @@
         if (res.ok && res.d.ok) {
           form.style.display = 'none';
           done.style.display = 'inline-block';
-          emit('launch_updates_joined');
         } else {
           error.textContent = (res.d && res.d.error) || 'something went wrong, try again';
           btn.disabled = false;

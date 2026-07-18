@@ -1,12 +1,13 @@
 /**
- * glyphloop.art worker: static assets + waitlist endpoint.
- * POST /api/waitlist {email} -> stored in KV (key: email, value: metadata).
+ * glyphloop.art worker: static assets + release-note signup endpoint.
+ * POST /api/waitlist {email, consent} -> stored in KV (key: email, value: metadata).
  */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRODUCT_EVENT_NAMES = new Set([
   'try_glyphloop',
+  'github_opened',
   'example_opened',
   'embed_copied',
   'editor_opened',
@@ -48,10 +49,12 @@ export default {
       }
 
       let email = '';
+      let consent = 'public-beta-launch-note';
       try {
         const body = await readJsonWithLimit(request);
         if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid body');
         email = String(body.email || '').trim().toLowerCase();
+        if (body.consent === 'v1-launch-note') consent = body.consent;
         // honeypot field: real users never fill it
         if (body.company) return json({ ok: true });
       } catch (error) {
@@ -68,6 +71,7 @@ export default {
           email,
           JSON.stringify({
             at: new Date().toISOString(),
+            consent,
           }),
         );
         writeAnalyticsPoint(env, {
