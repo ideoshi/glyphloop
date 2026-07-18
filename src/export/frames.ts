@@ -1,5 +1,5 @@
 import { FieldFrame } from '../core/field';
-import { CanvasRenderer, rowsFor, gridChars, FONT } from '../core/render';
+import { CanvasRenderer, rowsFor, gridChars, FONT, type RasterSize } from '../core/render';
 import { SceneRenderer } from '../core/scene';
 import type { AppState } from '../core/state';
 import { layerBitmaps } from '../core/layerimg';
@@ -23,7 +23,12 @@ export class FrameRenderer {
   private renderer: CanvasRenderer;
   private cellH: number;
 
-  constructor(private state: AppState, scale = 1, private transparent = false) {
+  constructor(
+    private state: AppState,
+    scale = 1,
+    private transparent = false,
+    private targetSize?: RasterSize,
+  ) {
     this.canvas = document.createElement('canvas');
     this.renderer = new CanvasRenderer(this.canvas);
     const rows = rowsFor(state.cols, state.aspect);
@@ -44,6 +49,8 @@ export class FrameRenderer {
       cols: this.state.cols,
       cellH: this.cellH,
       font: FONT,
+      outputWidth: this.targetSize?.width,
+      outputHeight: this.targetSize?.height,
     }, { colorGrid: this.colorGrid, fx: this.state.fx, transparent: this.transparent, layers: layerBitmaps(this.state.layers) });
     return this.canvas;
   }
@@ -86,6 +93,7 @@ export function yieldToUI(): Promise<void> {
 
 export interface ExportOpts {
   scale: number;
+  targetSize?: RasterSize;
   onProgress: (done: number, total: number) => void;
   signal: { aborted: boolean };
 }

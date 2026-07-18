@@ -21,6 +21,14 @@ export interface GridConfig {
   cols: number;
   cellH: number;
   font: string;
+  /** Optional exact raster dimensions, used when matching imported media. */
+  outputWidth?: number;
+  outputHeight?: number;
+}
+
+export interface RasterSize {
+  width: number;
+  height: number;
 }
 
 /** Rows needed so cols×rows renders at the given output aspect ratio (w/h). */
@@ -50,10 +58,10 @@ export class CanvasRenderer {
 
   draw(grid: FieldFrame, mapper: MapperConfig, gc: GridConfig, opts: DrawOpts = {}): void {
     const colorGrid = opts.colorGrid;
-    const cellH = gc.cellH;
-    const cellW = cellH * CHAR_ASPECT;
-    const width = Math.round(grid.cols * cellW);
-    const height = Math.round(grid.rows * cellH);
+    const width = gc.outputWidth ?? Math.round(grid.cols * gc.cellH * CHAR_ASPECT);
+    const height = gc.outputHeight ?? Math.round(grid.rows * gc.cellH);
+    const cellW = width / grid.cols;
+    const cellH = height / grid.rows;
     if (this.canvas.width !== width) this.canvas.width = width;
     if (this.canvas.height !== height) this.canvas.height = height;
 

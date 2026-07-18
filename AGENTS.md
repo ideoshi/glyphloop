@@ -98,7 +98,7 @@ before shipping it on a performance-sensitive page.
   "cols": 140,                        // 20–240
   "aspect": "16:9",                   // 16:9 | 4:3 | 1:1 | 9:16 | 21:9 or a number (w/h)
   "fps": 24,                          // 5–60
-  "duration": 8,                      // loop seconds 1–60; loops are always seamless
+  "duration": 8,                      // seconds 1–60; generated sources loop seamlessly
   "seed": 7                           // same seed = same animation
 }
 ```
