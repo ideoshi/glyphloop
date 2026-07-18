@@ -1,6 +1,5 @@
 {
   "name": "glyphloop",
-  "private": true,
   "version": "0.1.0-beta.0",
   "description": "Create loop-perfect ASCII animations in a browser or through a CLI and MCP server.",
   "license": "MIT",
