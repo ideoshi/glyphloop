@@ -1,8 +1,8 @@
 # Glyphloop - Agent Guide
 
-This repo generates **loop-perfect ASCII animations** for websites. As an AI
-agent you can create one without a browser: author a small JSON preset, run
-one command (or use the MCP server), and drop the output files into a site.
+This repo generates **loop-perfect generative ASCII animations** for websites.
+As an AI agent you can create one without a browser: author a small JSON preset,
+run one command (or use the MCP server), and drop the output files into a site.
 
 ## Quick start (CLI)
 
@@ -175,13 +175,14 @@ rather than foreignObject.)
   dark saturated colors render as sparse dim glyphs. Keep hues at mid-to-high
   luminance. Prefer a curated look? Click "Set ink & paper from image" to
   derive inks, then choose mono or gradient instead.
-- **Match the aspect.** Media is cover-cropped to the grid - design at the
-  aspect you'll render (16:9, 21:9, 1:1) so nothing important gets cut.
+- **Match the aspect.** The editor adopts imported media's native aspect ratio
+  and raster exports can match its exact pixel dimensions. The Fit and Scale
+  controls still let you crop, letterbox, stretch, or reframe it deliberately.
 - **Local media limits**: images ≤25 MiB and 40 decoded megapixels; videos
   ≤100 MiB; preset JSON ≤10 MiB. Media stays in the browser and is not uploaded.
 - **Videos**: ≤20 s, baked at the editor's fps; exactly one pass plays per
-  loop. Set Loop(s) to the clip length for natural speed, and use source
-  footage that already loops if you want a seamless result.
+  animation. Duration starts at the clip length for natural speed. Playback
+  repeats, but it is seamless only when the source footage already loops.
 - **Layer effects over the design**: `modulate` = living shimmer, `screen` =
   glints, `displace` = warp/ripple, `reveal` = build-in/out, `inside` =
   effect confined to the subject. Keep `amount` ≤0.5 when the design itself

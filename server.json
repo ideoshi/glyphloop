@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.ideoshi/glyphloop",
   "title": "Glyphloop",
-  "description": "Create loop-perfect ASCII animations and website-ready embeds with an AI agent.",
+  "description": "Create loop-perfect generative ASCII animations and website-ready embeds with an AI agent.",
   "version": "0.1.0-beta.0",
   "websiteUrl": "https://glyphloop.art/",
   "repository": {

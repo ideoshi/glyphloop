@@ -1,7 +1,8 @@
 # Glyphloop
 
-Local web app + headless CLI for loop-perfect ASCII animations (web embeds,
-MP4/GIF/PNG, terminal players).
+Local web app + headless CLI for loop-perfect generative ASCII animations (web
+embeds, MP4/GIF/PNG, terminal players). Imported video repeats one sampled pass
+and is seamless only when the source footage already loops.
 
 ## Commands
 
@@ -27,8 +28,8 @@ binary (replace the path with this repo's absolute path):
 claude mcp add --scope user glyphloop -- node "/absolute/path/to/glyphloop/bin/glyphloop.js" mcp
 ```
 
-The public `npx glyphloop@beta render ...` / `npx glyphloop@beta mcp` commands
-only work once the beta package is published to npm. Until then use
+Use the public `npx glyphloop@beta render ...` and `npx glyphloop@beta mcp`
+commands from any project. For development against this checkout, use
 `npm run render -- ...` and `npm run mcp` from inside the repo.
 
 ## Architecture
