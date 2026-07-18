@@ -19,7 +19,6 @@ try {
 
   const required = [
     '.github/workflows/ci.yml',
-    '.github/workflows/deploy.yml',
     'AGENTS.md',
     'CLAUDE.md',
     'CONTRIBUTING.md',
