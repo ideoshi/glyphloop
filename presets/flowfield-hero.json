@@ -1,0 +1,10 @@
+{
+  "sourceId": "flowfield",
+  "sourceParams": { "flowfield": { "scale": 1.2, "warp": 1.8, "motion": 0.5, "contrast": 2.4 } },
+  "mapper": { "fg": "#e8a34c", "bg": "#0d0f12" },
+  "cols": 160,
+  "aspect": "21:9",
+  "fps": 24,
+  "duration": 10,
+  "seed": 7
+}

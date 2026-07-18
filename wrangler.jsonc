@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "glyphloop-site",
+  "main": "site-worker/index.js",
+  "compatibility_date": "2026-07-01",
+  "account_id": "aacdcf99f06d624f4763cd04e0a2f3e6",
+  "assets": {
+    "directory": "./deploy",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/api/*"]
+  },
+  "routes": [
+    { "pattern": "glyphloop.art", "custom_domain": true },
+    { "pattern": "www.glyphloop.art", "custom_domain": true }
+  ],
+  "kv_namespaces": [
+    { "binding": "WAITLIST", "id": "c16eb4d0de5b4375b41d41c7a9a3da59" }
+  ],
+  "analytics_engine_datasets": [
+    { "binding": "PRODUCT_ANALYTICS", "dataset": "glyphloop_product_beta" }
+  ],
+  "ratelimits": [
+    {
+      "name": "WAITLIST_RATE_LIMITER",
+      "namespace_id": "17071701",
+      "simple": { "limit": 5, "period": 60 }
+    },
+    {
+      "name": "ANALYTICS_RATE_LIMITER",
+      "namespace_id": "17071801",
+      "simple": { "limit": 120, "period": 60 }
+    }
+  ],
+  "observability": { "enabled": true }
+}

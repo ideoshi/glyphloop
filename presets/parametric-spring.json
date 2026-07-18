@@ -1,0 +1,19 @@
+{
+  "sourceId": "parametric3d",
+  "sourceParams": {
+    "parametric3d": {
+      "xExpr": "(1 + 0.3*cos(v)) * cos(u*3) * (0.4 + u/9)",
+      "yExpr": "u/3 - 1 + 0.3*sin(v)",
+      "zExpr": "(1 + 0.3*cos(v)) * sin(u*3) * (0.4 + u/9)",
+      "spinY": 1,
+      "spinX": 0,
+      "zoom": 1.1
+    }
+  },
+  "mapper": { "fg": "#f2c14e", "bg": "#0a0a12" },
+  "cols": 120,
+  "aspect": "1:1",
+  "fps": 30,
+  "duration": 8,
+  "seed": 2
+}

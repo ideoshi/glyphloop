@@ -1,0 +1,10 @@
+{
+  "sourceId": "waves",
+  "sourceParams": { "waves": { "scale": 3, "cycles": 1, "layers": 3, "radial": 0.5, "contrast": 1.2 } },
+  "mapper": { "rampName": "Dots", "colorMode": "gradient", "fg": "#1a5fb4", "fg2": "#99c1f1", "bg": "#020408" },
+  "cols": 140,
+  "aspect": "16:9",
+  "fps": 24,
+  "duration": 8,
+  "seed": 3
+}

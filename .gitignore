@@ -1,0 +1,8 @@
+node_modules/
+dist/
+deploy/
+.wrangler/
+.private/
+.superpowers/
+.DS_Store
+demo/jellyfish/out/

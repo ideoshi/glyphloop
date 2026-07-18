@@ -1,0 +1,10 @@
+{
+  "sourceId": "blobs",
+  "sourceParams": { "blobs": { "scale": 1.1, "threshold": 0.5, "softness": 0.22, "motion": 0.7 } },
+  "mapper": { "colorMode": "gradient", "fg": "#613583", "fg2": "#f66151", "bg": "#0a0a0f" },
+  "cols": 150,
+  "aspect": "16:9",
+  "fps": 24,
+  "duration": 12,
+  "seed": 21
+}

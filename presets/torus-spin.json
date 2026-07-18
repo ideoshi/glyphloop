@@ -1,0 +1,10 @@
+{
+  "sourceId": "shapes3d",
+  "sourceParams": { "shapes3d": { "shape": "torus", "spinX": 1, "spinY": 2, "zoom": 1.1, "ambient": 0.1 } },
+  "mapper": { "fg": "#33d17a", "bg": "#000000" },
+  "cols": 120,
+  "aspect": "1:1",
+  "fps": 30,
+  "duration": 6,
+  "seed": 1
+}

@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glyphloop - loops that move like water</title>
+<meta name="description" content="Glyphloop turns math, your images, and your text into ASCII animations that repeat forever without a seam, and keep the colors of whatever they run across.">
+<meta property="og:title" content="Glyphloop">
+<meta property="og:description" content="ASCII animations that loop perfectly, inherit your colors, and can be made by your AI.">
+<meta property="og:image" content="https://glyphloop.art/og.png">
+<meta property="og:url" content="https://glyphloop.art">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍩</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --dusk: #1c2126;
+  --dusk-2: #20262c;
+  --dusk-3: #1b2025;
+  --dusk-4: #131619;
+  --black: #0c0d0a;
+  --paper: #e7dece;
+  --paper-2: #ded4c2;
+  --card: #f3ecdd;
+  --card-inner: #efe6d3;
+  --ink: #2b2a24;
+  --ink-soft: #55524a;
+  --ink-dim: #8a8477;
+  --cream: #efe7d8;
+  --cream-70: rgba(239, 231, 216, 0.7);
+  --amber: #e0a06a;
+  --amber-deep: #b96f3d;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --serif: 'Newsreader', Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--dusk);
+  color: var(--cream);
+  font-family: var(--serif);
+  font-weight: 300;
+}
+
+::selection { background: var(--cream); color: var(--dusk-2); }
+
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: 0.06; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+.mono-label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; }
+.eyebrow { margin-bottom: 20px; }
+.eyebrow .num { color: var(--amber); }
+.light .eyebrow .num { color: var(--amber-deep); }
+
+.wrap { max-width: 1220px; margin: 0 auto; padding: 104px 40px; }
+
+h1, h2 { font-family: var(--serif); font-weight: 300; letter-spacing: -0.015em; margin: 0; }
+h1 em, h2 em { font-style: italic; font-weight: 400; }
+
+.glc-ascii pre { margin: 0; padding: 0; font-family: var(--mono); line-height: 1; white-space: pre; }
+.glc-ascii::-webkit-scrollbar { display: none; }
+
+@keyframes blink { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0; } }
+
+/* ---------- nav ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(18, 21, 26, 0.74);
+  backdrop-filter: blur(9px);
+  border-bottom: 1px solid rgba(239, 231, 216, 0.13);
+}
+.nav-inner { max-width: 1220px; margin: 0 auto; padding: 0 40px; height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.nav img { height: 19px; display: block; }
+.nav nav { display: flex; align-items: center; gap: 26px; }
+.nav nav a { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream-70); }
+.nav nav a:hover { color: var(--cream); }
+.nav .cta { font-size: 11px; letter-spacing: 0.14em; color: #1c1f24; background: var(--amber); padding: 9px 16px; }
+.nav .cta:hover { background: #eab079; color: #1c1f24; }
+@media (max-width: 860px) { .nav nav a:not(.cta) { display: none; } }
+
+/* ---------- hero ---------- */
+.hero { position: relative; min-height: calc(100vh - 62px); overflow: hidden; background: #14171c; }
+.hero-render { position: absolute; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #14171c; }
+.hero-video { width: 100%; height: 100%; object-fit: cover; }
+.hero-vignette-r { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(16,19,24,0.78) 0%, rgba(16,19,24,0.45) 42%, rgba(16,19,24,0.05) 72%); }
+.hero-vignette-l { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(20,23,28,0.5) 0%, rgba(20,23,28,0.08) 34%, rgba(20,23,28,0.12) 66%, rgba(16,19,24,0.65) 100%); }
+.hero-inner { position: relative; z-index: 3; min-height: calc(100vh - 62px); display: flex; flex-direction: column; justify-content: center; max-width: 1120px; margin: 0 auto; padding: 40px 40px 72px; pointer-events: none; }
+.hero-inner .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(239,231,216,0.85); margin-bottom: 26px; text-shadow: 0 1px 12px rgba(18,21,26,0.6); }
+.hero h1 { font-size: clamp(46px, 7.5vw, 104px); line-height: 1.0; margin-bottom: 26px; max-width: 15ch; text-shadow: 0 2px 30px rgba(16,19,24,0.55); }
+.hero .lede { font-size: clamp(18px, 2.1vw, 25px); line-height: 1.5; color: rgba(244,238,227,0.95); max-width: 46ch; margin: 0 0 34px; text-shadow: 0 1px 16px rgba(16,19,24,0.55); }
+.hero .term-line { font-family: var(--mono); font-size: 14px; color: rgba(239,231,216,0.92); margin-bottom: 36px; text-shadow: 0 1px 12px rgba(16,19,24,0.65); }
+.hero .term-line .host { color: rgba(239,231,216,0.6); }
+.hero .term-line .p { color: var(--amber); margin: 0 7px; }
+.hero .cursor { display: inline-block; width: 0.55em; height: 1.05em; background: var(--amber); margin-left: 4px; vertical-align: -0.16em; animation: blink 1.05s steps(1) infinite; }
+.hero .btns { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; padding: 14px 26px; transition: transform 120ms cubic-bezier(0.2,0,0,1), background 160ms, border-color 160ms; cursor: pointer; }
+.btn:active { transform: translate(1px, 1px); }
+.btn-solid { color: #1c1f24; background: var(--cream); border: 1px solid var(--cream); }
+.btn-solid:hover { background: #ffffff; }
+.btn-ghost { color: var(--cream); background: transparent; border: 1px solid rgba(239,231,216,0.55); }
+.btn-ghost:hover { border-color: var(--cream); }
+.hero-hint { position: absolute; left: 0; right: 0; bottom: 22px; z-index: 3; text-align: center; pointer-events: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; color: rgba(239,231,216,0.72); text-shadow: 0 1px 10px rgba(16,19,24,0.6); }
+
+/* ---------- light bands ---------- */
+.light { color: var(--ink); }
+.light .mono-label { color: #6b6559; }
+.light h2 { font-size: clamp(30px, 4.6vw, 56px); line-height: 1.05; }
+.light .lede { font-size: 20px; line-height: 1.55; color: var(--ink-soft); font-weight: 300; }
+
+#sources { background: var(--paper); }
+#sources h2 { margin-bottom: 18px; max-width: 18ch; }
+#sources .lede { max-width: 60ch; margin: 0 0 16px; }
+.source-list { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--ink-dim); margin-bottom: 44px; }
+
+.prints { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 26px; }
+.print { margin: 0; min-width: 0; background: var(--card); padding: 14px; border: 1px solid rgba(43,42,36,0.18); box-shadow: 0 26px 50px -34px rgba(30,28,24,0.7); }
+.print .plate { position: relative; background: var(--card-inner); overflow: hidden; border: 1px solid rgba(43,42,36,0.1); }
+.print .glc-ascii { height: 216px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.print .recipe { position: absolute; inset: 0; margin: 0; padding: 18px; background: rgba(28,26,22,0.93); color: var(--card-inner); font-family: var(--mono); font-size: 11.5px; line-height: 1.65; white-space: pre-wrap; overflow: auto; pointer-events: none; transition: opacity 180ms cubic-bezier(0.2,0,0,1); opacity: 0; }
+.print:hover .recipe, .print:focus-within .recipe { opacity: 1; }
+.print figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 2px 2px; }
+.print .pname { font-family: var(--serif); font-style: italic; font-size: 21px; color: var(--ink); }
+.print .pmeta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+.example-actions { display: flex; gap: 8px; padding: 8px 2px 2px; }
+.example-action { flex: 1; border: 1px solid rgba(43,42,36,0.25); background: transparent; color: var(--ink-soft); padding: 8px 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; text-align: center; cursor: pointer; }
+.example-action:hover { border-color: var(--amber-deep); color: var(--ink); }
+
+/* ---------- compose ---------- */
+#compose { position: relative; background: var(--dusk-2); overflow: hidden; }
+#compose h2 { font-size: clamp(30px, 4.6vw, 56px); line-height: 1.05; margin-bottom: 46px; max-width: 17ch; }
+.compose-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: start; }
+.compose-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.compose-panel { min-width: 0; position: relative; background: #0e1013; border: 1px solid rgba(239,231,216,0.16); box-shadow: 0 30px 60px -34px rgba(0,0,0,0.8); overflow: hidden; }
+.compose-panel .art-video { display: block; width: 100%; height: 360px; object-fit: cover; object-position: 50% 22%; }
+.compose-panel .glc-ascii { position: relative; height: 360px; overflow: hidden; display: flex; align-items: center; justify-content: center; opacity: 0.58; mix-blend-mode: overlay; filter: blur(0.3px); pointer-events: none; }
+.compose-panel .tag { position: absolute; left: 14px; bottom: 12px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(239,231,216,0.75); }
+.compose-strip { margin: 0; }
+.compose-strip video { display: block; width: 100%; }
+.compose-copy .compose-strip { margin-top: 28px; }
+.overlay-feature { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: center; margin-top: 64px; }
+.overlay-stage { margin: 0; }
+.overlay-stage video { display: block; width: 100%; }
+.overlay-copy h3 { font-family: var(--serif); font-size: clamp(28px, 3vw, 40px); font-weight: 400; line-height: 1.05; margin: 18px 0 20px; }
+.overlay-copy h3 em { font-style: italic; color: var(--amber); }
+@media (max-width: 860px) { .overlay-feature { grid-template-columns: 1fr; } }
+.compose-copy .lede { font-size: 20px; line-height: 1.55; color: rgba(239,231,216,0.85); margin: 0 0 28px; max-width: 50ch; }
+.compose-copy .lede em { color: #f0e7d4; }
+.blend-rows { display: flex; flex-direction: column; border-top: 1px solid rgba(239,231,216,0.16); }
+.blend-rows > div { display: flex; gap: 18px; padding: 15px 0; border-bottom: 1px solid rgba(239,231,216,0.13); }
+.blend-rows .b { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em; color: rgba(239,231,216,0.9); min-width: 104px; }
+.blend-rows > div:first-child .b { color: var(--amber); }
+.blend-rows .d { font-family: var(--serif); font-size: 17px; color: rgba(239,231,216,0.82); }
+@media (max-width: 860px) { .compose-grid { grid-template-columns: 1fr; } }
+
+/* ---------- loops ---------- */
+#loops { background: var(--paper-2); }
+#loops .wrap { display: grid; grid-template-columns: 1fr 0.92fr; gap: 56px; align-items: center; }
+#loops h2 { margin-bottom: 22px; max-width: 14ch; }
+#loops .lede { margin: 0 0 30px; max-width: 54ch; }
+.spec { display: grid; grid-template-columns: auto 1fr; gap: 10px 22px; font-family: var(--mono); font-size: 13px; border-top: 1px solid rgba(43,42,36,0.2); padding-top: 20px; }
+.spec .k { color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+.spec .v { color: var(--ink); text-align: right; }
+#loops .print .glc-ascii { height: 340px; }
+@media (max-width: 860px) { #loops .wrap { grid-template-columns: 1fr; } }
+
+/* ---------- export ---------- */
+#export { position: relative; background: var(--dusk-3); overflow: hidden; }
+#export h2 { font-size: clamp(30px, 4.6vw, 56px); line-height: 1.05; margin-bottom: 46px; max-width: 14ch; }
+.exports { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+.output-rights { margin: 28px 0 0; max-width: 72ch; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: rgba(239,231,216,0.62); }
+.export-card { border: 1px solid rgba(239,231,216,0.18); background: rgba(239,231,216,0.03); padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.export-card .fmt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(239,231,216,0.55); }
+.export-card:first-child .fmt { color: var(--amber); }
+.export-card .t { font-family: var(--serif); font-style: italic; font-size: 23px; }
+.export-card .d { font-family: var(--serif); font-weight: 300; font-size: 16px; line-height: 1.5; color: rgba(239,231,216,0.72); }
+
+/* ---------- agents ---------- */
+#agents { position: relative; background: var(--dusk-4); overflow: hidden; }
+.agents-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 52px; align-items: center; }
+#agents h2 { font-size: clamp(30px, 4.4vw, 52px); line-height: 1.05; margin-bottom: 22px; max-width: 15ch; }
+#agents .lede { font-size: 19px; line-height: 1.55; color: rgba(239,231,216,0.82); margin: 0 0 28px; max-width: 50ch; }
+.agents-spec { display: grid; grid-template-columns: auto 1fr; gap: 10px 22px; font-family: var(--mono); font-size: 13px; border-top: 1px solid rgba(239,231,216,0.16); padding-top: 20px; max-width: 340px; }
+.agents-spec .k { color: rgba(239,231,216,0.55); }
+.agents-spec .v { color: var(--cream); text-align: right; }
+.term { min-width: 0; font-family: var(--mono); font-size: 13.5px; line-height: 1.85; color: var(--cream); background: #0b0d10; border: 1px solid rgba(239,231,216,0.14); padding: 24px; overflow-x: auto; margin: 0; box-shadow: 0 30px 60px -34px rgba(0,0,0,0.9); }
+.term .c { color: rgba(239,231,216,0.5); }
+.term .p { color: var(--amber); }
+.term .ok { color: #8fb98a; }
+@media (max-width: 860px) { .agents-grid { grid-template-columns: 1fr; } }
+
+/* ---------- waitlist ---------- */
+#waitlist { background: var(--paper); }
+#waitlist .wrap { padding: 120px 40px; text-align: center; }
+#waitlist h2 { font-size: clamp(34px, 6vw, 72px); line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 20px; }
+#waitlist .lede { font-size: 21px; line-height: 1.5; max-width: 50ch; margin: 0 auto 30px; }
+.studio-link { display: inline-block; color: #1c1f24; background: var(--amber); border: 1px solid #c8824c; margin-bottom: 46px; }
+.studio-link:hover { background: #eab079; }
+.wl-invite { margin: 0 0 16px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
+.wl-form { display: flex; gap: 12px; max-width: 480px; margin: 0 auto; align-items: stretch; flex-wrap: wrap; justify-content: center; }
+.wl-form input[type='email'] { flex: 1; min-width: 240px; font-family: var(--mono); font-size: 14px; color: var(--ink); background: #f6f0e3; border: 1px solid rgba(43,42,36,0.4); padding: 0 16px; height: 48px; }
+.wl-form .hp { position: absolute; left: -9999px; }
+.wl-form button { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #1c1f24; background: var(--amber); border: 1px solid #c8824c; padding: 0 26px; height: 48px; cursor: pointer; transition: transform 120ms cubic-bezier(0.2,0,0,1), background 160ms; }
+.wl-form button:hover { background: #eab079; }
+.wl-form button:active { transform: translate(1px, 1px); }
+.wl-done { font-family: var(--mono); font-size: 15px; color: var(--ink); border: 1px solid rgba(43,42,36,0.35); background: var(--card); display: none; padding: 18px 28px; }
+.wl-done .s { color: var(--amber-deep); }
+.wl-error { font-family: var(--mono); font-size: 12.5px; color: #a04a2c; margin-top: 14px; min-height: 1.2em; }
+.wl-dots { margin-top: 48px; font-family: var(--mono); font-size: 16px; letter-spacing: 0.5em; color: rgba(43,42,36,0.35); }
+
+/* ---------- footer ---------- */
+footer { background: var(--black); color: var(--cream-70); }
+footer .wrap { padding: 88px 40px 40px; text-align: center; }
+footer .mark { width: min(560px, 80vw); display: block; margin: 0 auto 26px; }
+footer .tag { font-family: var(--serif); font-style: italic; font-size: 19px; color: rgba(239,231,216,0.6); margin: 0 0 40px; }
+footer .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; border-top: 1px solid rgba(239,231,216,0.12); padding-top: 26px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: rgba(239,231,216,0.55); }
+footer .row a { color: var(--amber); }
+
+/* side-by-side demo: source next to its ascii-ization (agents + export) */
+/* higher specificity so #agents .lede's margin does not zero the top gap */
+#agents .duo-lede { margin: 72px 0 0; max-width: 62ch; }
+.duo-steps { margin-top: 34px; max-width: 820px; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 42px; }
+.duo-panel { margin: 0; border-radius: 10px; }
+.duo-panel video, .duo-panel img, .duo-panel .glc-ascii { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; overflow: hidden; background: #05070c; }
+/* contain: size keeps the pre from inflating the box; height comes from the aspect ratio */
+.duo-panel .glc-ascii { contain: size; display: flex; align-items: center; justify-content: center; }
+.duo-panel .glc-ascii[hidden] { display: none; }
+.duo-panel figcaption { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 4px 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: rgba(239,231,216,0.55); }
+.duo-ramps { display: flex; gap: 6px; }
+.duo-ramps button { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: rgba(239,231,216,0.55); background: none; border: 1px solid rgba(239,231,216,0.18); border-radius: 5px; padding: 3px 9px; cursor: pointer; }
+.duo-ramps button:hover { color: rgba(239,231,216,0.85); }
+.duo-ramps button.on { color: var(--amber); border-color: var(--amber); }
+@media (max-width: 760px) { .duo { grid-template-columns: 1fr; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor { animation: none; }
+  .print .recipe { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#top" aria-label="Glyphloop"><img src="wordmark.png" alt="Glyphloop"></a>
+    <nav>
+      <a href="#sources">Sources</a>
+      <a href="#compose">Compose</a>
+      <a href="#loops">Loops</a>
+      <a href="#export">Export</a>
+      <a href="#agents">Agents</a>
+      <a class="cta" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <video class="hero-render hero-video" src="assets/hero-ship/hero.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+  <div class="hero-vignette-r"></div>
+  <div class="hero-vignette-l"></div>
+  <div class="grain"></div>
+  <div class="hero-inner">
+    <div class="eyebrow"><span style="color:var(--amber)">00</span> &nbsp;Ambient ASCII, rendered like weather</div>
+    <h1>Loops that move <em>like water.</em></h1>
+    <p class="lede">Glyphloop turns math, your images, and your text into animations that repeat forever without a seam, and keep the colors of whatever they run across.</p>
+    <div class="term-line"><span class="host">glyphloop</span><span class="p">$</span>compose --over ship.jpg<span class="cursor"></span></div>
+    <div class="btns">
+      <a class="btn btn-solid" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
+      <a class="btn btn-ghost" href="#sources">Explore examples</a>
+      <a class="btn btn-ghost" href="#waitlist">Get the launch email</a>
+    </div>
+  </div>
+  <div class="hero-hint">This is a painting, processed by Glyphloop into living text. Its colors are kept, cell by cell, and the loop never seams.</div>
+</section>
+
+<section id="sources" class="light">
+  <div class="wrap">
+    <div class="mono-label eyebrow"><span class="num">01</span> &nbsp;A gallery of loops</div>
+    <h2>Seven ways in. Or a <em>single line of math.</em></h2>
+    <p class="lede">Flow fields, wave interference, matrix rain, shaded 3D shapes. The <em>expr</em> and <em>parametric3d</em> sources take plain math, so a one-line formula becomes an animation and three lines become an object.</p>
+    <div class="source-list">flowfield &middot; waves &middot; rain &middot; shapes3d &middot; expr &middot; parametric3d &middot; blobs</div>
+    <div class="prints" id="gallery"></div>
+  </div>
+</section>
+
+<section id="compose">
+  <div class="grain"></div>
+  <div class="wrap" style="position:relative">
+    <div class="mono-label eyebrow"><span class="num">02</span> &nbsp;Composition</div>
+    <h2>Lay an effect over your own <em>images and text.</em></h2>
+    <div style="height:46px"></div>
+    <div class="compose-grid">
+      <div class="compose-col">
+        <div class="compose-panel">
+          <video class="art-video" data-src="assets/compose/ascii-portrait.mp4" autoplay muted loop playsinline preload="none"></video>
+          <div class="tag">rain &middot; screen over a portrait</div>
+        </div>
+        <figure class="compose-panel compose-strip">
+          <video data-src="assets/compose/neon-logo.mp4" autoplay muted loop playsinline preload="none"></video>
+          <div class="tag">flowfield &middot; modulate over a logo</div>
+        </figure>
+      </div>
+      <div class="compose-copy">
+        <p class="lede">Drop in a photo, a video, a logo, or type some text. Glyphloop maps it to characters and keeps <em>its own colors</em>, cell by cell, then animates an effect through it.</p>
+        <div class="blend-rows">
+          <div><span class="b">modulate</span><span class="d">the image breathes with the effect</span></div>
+          <div><span class="b">displace</span><span class="d">waves physically warp it</span></div>
+          <div><span class="b">reveal</span><span class="d">it assembles out of noise</span></div>
+          <div><span class="b">inside</span><span class="d">rain falls only inside the subject</span></div>
+        </div>
+        <figure class="compose-panel compose-strip">
+          <video data-src="assets/compose/landscape.mp4" autoplay muted loop playsinline preload="none"></video>
+          <div class="tag">flowfield &middot; reveal over a sunset</div>
+        </figure>
+      </div>
+    </div>
+    <div class="overlay-feature">
+      <figure class="compose-panel overlay-stage">
+        <video data-src="assets/compose/overlay.mp4" autoplay muted loop playsinline preload="none"></video>
+        <div class="tag">noise blobs &middot; crisp PNG over live ASCII</div>
+      </figure>
+      <div class="overlay-copy">
+        <div class="mono-label eyebrow"><span class="num">02</span> &nbsp;Overlay</div>
+        <h3>Keep a subject <em>crisp.</em></h3>
+        <p class="lede">Lay a transparent PNG on top of the finished ASCII and the effect renders only behind it. A figure, a product, a logo stays sharp while everything around it turns to text.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="loops" class="light">
+  <div class="wrap">
+    <div>
+      <div class="mono-label eyebrow"><span class="num">03</span> &nbsp;Seamless by construction</div>
+      <h2>Every loop closes <em>on itself.</em></h2>
+      <p class="lede">Sources are pure functions of time. Noise is sampled along a circle in two extra dimensions, and every sine phase advances by a whole multiple of 2&pi; per loop. The last frame wraps back to the first, exactly. No seam, no jump, no crossfade.</p>
+      <div class="spec">
+        <span class="k">render</span><span class="v">round(fps &times; duration) frames</span>
+        <span class="k">start</span><span class="v">t = 0</span>
+        <span class="k">example</span><span class="v">24 fps &times; 10 s = 240 frames</span>
+        <span class="k">wrap</span><span class="v">frame&nbsp;239 &rarr; frame&nbsp;0</span>
+      </div>
+    </div>
+    <figure class="print">
+      <div class="plate">
+        <div class="glc-ascii" data-embed="assets/knot/frames.json" data-mode="gradient" data-fg="#4a3320" data-fg2="#c79a6b" aria-hidden="true"></div>
+      </div>
+      <figcaption>
+        <span class="pname">Knot</span>
+        <span class="pmeta">shapes3d &middot; 8s loop</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="export">
+  <div class="grain"></div>
+  <div class="wrap" style="position:relative">
+    <div class="mono-label eyebrow"><span class="num">04</span> &nbsp;Export</div>
+    <h2>One loop, <em>five ways out.</em></h2>
+    <div style="height:46px"></div>
+    <div class="exports">
+      <div class="export-card"><span class="fmt">PNG</span><span class="t">Still frame</span><span class="d">The current frame at 1&ndash;3&times; scale, alpha preserved.</span></div>
+      <div class="export-card"><span class="fmt">GIF</span><span class="t">Animated loop</span><span class="d">One full loop, rendered frame by frame, seamless on wrap.</span></div>
+      <div class="export-card"><span class="fmt">MP4</span><span class="t">Video</span><span class="d">Deterministic H.264 via WebCodecs. Never drops a frame.</span></div>
+      <div class="export-card"><span class="fmt">WEB</span><span class="t">Self-contained embed</span><span class="d">RLE frames plus a tiny player. Honors reduced-motion.</span></div>
+      <div class="export-card"><span class="fmt">ANSI</span><span class="t">Terminal player</span><span class="d">frames.ans + play.sh. Loop it right in a shell.</span></div>
+    </div>
+    <p class="output-rights">Glyphloop claims no ownership in content you import or animations you export. You may use exported animations commercially without attribution, subject to any rights applicable to your source materials. The embed player is MIT-licensed.</p>
+    <div class="duo">
+      <figure class="duo-panel">
+        <img src="assets/export/scene.jpg" alt="Source painting: a suited figure on a hillside at sunset" loading="lazy">
+        <figcaption>the source image, dropped into Glyphloop</figcaption>
+      </figure>
+      <figure class="duo-panel">
+        <video data-src="assets/export/showcase.mp4" autoplay muted loop playsinline preload="none"></video>
+        <figcaption>the MP4 export &middot; 6 s seamless loop &middot; never a dropped frame</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="agents">
+  <div class="grain"></div>
+  <div class="wrap" style="position:relative">
+    <div class="mono-label eyebrow"><span class="num">05</span> &nbsp;For humans and agents</div>
+    <div class="agents-grid">
+      <div>
+        <h2>Your AI already knows how to <em>drive it.</em></h2>
+        <p class="lede">Two lanes. <em>Write math:</em> an agent sends a small JSON preset over MCP or the CLI, previews the frame as text, and renders website-ready files, no browser needed. <em>Or design:</em> an agent builds a frame in HTML or canvas, drops the render in, and Glyphloop turns the whole design into living text with its colors kept. The jellyfish below was made the second way.</p>
+        <div class="agents-spec">
+          <span class="k">MCP</span><span class="v">npx glyphloop@beta mcp</span>
+          <span class="k">CLI</span><span class="v">npx glyphloop@beta render</span>
+          <span class="k">HTML</span><span class="v">design &rarr; drop &rarr; glyphs</span>
+        </div>
+      </div>
+      <pre class="term"><span class="c"># any agent, any project</span>
+<span class="p">$</span> npx glyphloop@beta render \
+  --preset flowfield-hero --out hero/
+
+<span class="ok">{ "ok": true, "fps": 24, "duration": 10,
+  "frames": 240, "files": ["frames.json",
+  "player.js", "index.html"] }</span></pre>
+    </div>
+    <p class="lede duo-lede">Proof, not promise. The aquarium below started as a single prompt to Claude and became the living text beside it.</p>
+    <div class="blend-rows duo-steps">
+      <div><span class="b">1 &middot; prompt</span><span class="d">ask Claude for a scene: a glowing jellyfish, three fish passing through, marine snow, a seamless 12&#8202;s loop</span></div>
+      <div><span class="b">2 &middot; canvas</span><span class="d">Claude writes one HTML file where every motion is periodic in the loop, so the last frame lands exactly on the first</span></div>
+      <div><span class="b">3 &middot; glyphs</span><span class="d">the render drops into Glyphloop, which picks a character for every cell by brightness and keeps the colors</span></div>
+    </div>
+    <div class="duo">
+      <figure class="duo-panel">
+        <video id="duo-video" data-src="assets/jellyfish/jellyfish-loop.mp4" autoplay muted loop playsinline preload="none"></video>
+        <figcaption>canvas animation, written by Claude in one prompt</figcaption>
+      </figure>
+      <figure class="duo-panel">
+        <div class="glc-ascii" data-embed="assets/jellyfish/frames-fish.json" data-fit="cover" data-sync="#duo-video" aria-hidden="true"></div>
+        <div class="glc-ascii" data-embed="assets/jellyfish/frames-classic.json" data-fit="cover" data-sync="#duo-video" aria-hidden="true" hidden></div>
+        <div class="glc-ascii" data-embed="assets/jellyfish/frames-blocks.json" data-fit="cover" data-sync="#duo-video" aria-hidden="true" hidden></div>
+        <div class="glc-ascii" data-embed="assets/jellyfish/frames-dots.json" data-fit="cover" data-sync="#duo-video" aria-hidden="true" hidden></div>
+        <div class="glc-ascii" data-embed="assets/jellyfish/frames-binary.json" data-fit="cover" data-sync="#duo-video" aria-hidden="true" hidden></div>
+        <figcaption>
+          <span>the same loop, processed by Glyphloop &middot; colors kept per cell</span>
+          <span class="duo-ramps">
+            <button class="on" data-embed="assets/jellyfish/frames-fish.json">FISH</button>
+            <button data-embed="assets/jellyfish/frames-classic.json">classic</button>
+            <button data-embed="assets/jellyfish/frames-blocks.json">blocks</button>
+            <button data-embed="assets/jellyfish/frames-dots.json">dots</button>
+            <button data-embed="assets/jellyfish/frames-binary.json">binary</button>
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="waitlist" class="light">
+  <div class="wrap">
+    <div class="mono-label eyebrow"><span class="num">06</span> &nbsp;The studio is open</div>
+    <h2>Make your <em>first loop.</em></h2>
+    <p class="lede">Start with a preset, drop in an image or change a phrase, and export a website-ready animation. No account required.</p>
+    <a class="btn studio-link" href="/studio/" data-event="try_glyphloop">Try Glyphloop</a>
+    <p class="wl-invite">Get one email when the public beta launches. No newsletter.</p>
+    <form class="wl-form" id="wl-form">
+      <input type="email" name="email" placeholder="you@studio.com" autocomplete="email" required aria-label="Email address">
+      <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit">Email me at launch</button>
+    </form>
+    <div class="wl-done" id="wl-done"><span class="s">//</span> you're on the list. we'll email you when the public beta launches.</div>
+    <div class="wl-error" id="wl-error"></div>
+    <div class="wl-dots">&bull; &bull; &bull;</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <img class="mark" src="wordmark.png" alt="Glyphloop">
+    <p class="tag">glyphs, and seamless loops.</p>
+    <div class="row">
+      <span>Made with Glyphloop, obviously. An <a href="https://ideoshi.com">ideoshi</a> project. <a href="/privacy.html">Privacy</a>.</span>
+      <span>&copy; 2026 Ideoshi</span>
+    </div>
+  </div>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>

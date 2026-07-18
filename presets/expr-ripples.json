@@ -1,0 +1,12 @@
+{
+  "sourceId": "expr",
+  "sourceParams": {
+    "expr": { "expr": "0.5 + 0.5*sin(8*length(x, y) - 2*theta) * smoothstep(1.6, 0.2, length(x, y))" }
+  },
+  "mapper": { "colorMode": "gradient", "fg": "#0b3954", "fg2": "#bfd7ea", "bg": "#020609" },
+  "cols": 140,
+  "aspect": "16:9",
+  "fps": 24,
+  "duration": 6,
+  "seed": 5
+}

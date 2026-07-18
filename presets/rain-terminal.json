@@ -1,0 +1,10 @@
+{
+  "sourceId": "rain",
+  "sourceParams": { "rain": { "density": 0.7, "tail": 16, "maxSpeed": 3, "glitter": 0.5 } },
+  "mapper": { "rampName": "Dense", "fg": "#26a269", "bg": "#000000" },
+  "cols": 120,
+  "aspect": "16:9",
+  "fps": 30,
+  "duration": 6,
+  "seed": 99
+}

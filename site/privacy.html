@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy - Glyphloop</title>
+<meta name="description" content="How Glyphloop handles imported media, product analytics, and launch-update email addresses.">
+<style>
+  :root { color-scheme: light; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #e7dece; color: #2b2a24; }
+  body { margin: 0; }
+  main { width: min(720px, calc(100% - 40px)); margin: 0 auto; padding: 64px 0 96px; }
+  a { color: #9b4f20; }
+  h1 { margin: 0 0 36px; font: 400 clamp(42px, 8vw, 76px)/1 Georgia, serif; }
+  h2 { margin: 34px 0 10px; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
+  p, li { font-family: Georgia, serif; font-size: 19px; line-height: 1.58; }
+  ul { padding-left: 24px; }
+  .label { margin-bottom: 18px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+  button { border: 1px solid #9b4f20; background: transparent; color: #2b2a24; padding: 11px 14px; font: inherit; cursor: pointer; }
+  #status { min-height: 1.5em; font: 13px/1.5 ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <div class="label"><a href="/">Glyphloop</a> / privacy</div>
+  <h1>Your work stays yours.</h1>
+
+  <h2>Imported media</h2>
+  <p>Images, videos, text, presets, and animations you create in the Studio are processed in your browser. Glyphloop does not upload or store that creative material.</p>
+
+  <h2>Product analytics</h2>
+  <p>Cloudflare Web Analytics measures aggregate page traffic and real-user performance. Cloudflare states that this service does not collect or use visitors' personal data.</p>
+  <p>The hosted website and Studio also record a small set of product events so we can learn whether visitors reach the Studio, import media, and complete an export. A random browser identifier and a per-tab session identifier are used to count return use and funnel completion.</p>
+  <p>Product analytics do not include IP addresses, user-agent strings, filenames, imported media, entered text, expressions, custom preset names, email addresses, or exported files. Events are retained by Cloudflare Analytics Engine for three months. Global Privacy Control and Do Not Track are honored.</p>
+  <button id="disable" type="button">Disable product analytics on this browser</button>
+  <p id="status" aria-live="polite"></p>
+
+  <h2>Launch updates</h2>
+  <p>If you request the public-beta launch email, Glyphloop stores your email address and signup time in Cloudflare Workers KV. This information is used only to send that one email, is not included in product analytics, and will be deleted after the launch email has been sent.</p>
+
+  <h2>Open-source and command-line use</h2>
+  <p>Source checkouts, the CLI, and the MCP server do not send product analytics to Glyphloop.</p>
+</main>
+<script>
+  (function () {
+    var button = document.getElementById('disable');
+    var status = document.getElementById('status');
+    try {
+      if (localStorage.getItem('glyphloop-analytics-disabled') === '1') status.textContent = 'Product analytics are disabled on this browser.';
+    } catch (_) {}
+    button.addEventListener('click', function () {
+      try {
+        localStorage.setItem('glyphloop-analytics-disabled', '1');
+        localStorage.removeItem('glyphloop-anonymous-id');
+        sessionStorage.removeItem('glyphloop-session-id');
+        status.textContent = 'Product analytics are disabled on this browser.';
+      } catch (_) {
+        status.textContent = 'Your browser did not allow this preference to be saved.';
+      }
+    });
+  }());
+</script>
+</body>
+</html>
