@@ -26,6 +26,7 @@ try {
     'README.md',
     'SECURITY.md',
     'site/index.html',
+    'site/sitemap.xml',
     'src/core/state.ts',
   ];
 
