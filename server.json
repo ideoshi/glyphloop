@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ideoshi/glyphloop",
+  "title": "Glyphloop",
+  "description": "Create loop-perfect ASCII animations and website-ready embeds with an AI agent.",
+  "version": "0.1.0-beta.0",
+  "websiteUrl": "https://glyphloop.art/",
+  "repository": {
+    "url": "https://github.com/ideoshi/glyphloop",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "glyphloop",
+      "version": "0.1.0-beta.0",
+      "runtimeHint": "npx",
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
