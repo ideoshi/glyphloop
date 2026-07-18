@@ -325,7 +325,8 @@ export function mountApp(root: HTMLElement): void {
           }, mediaFit(), mediaScale());
           if (result.seconds > 0) setDuration(Math.min(20, Math.max(2, result.seconds)));
           await captureUnderlay(file);
-          status.textContent = `${file.name} - ${dimensions.width}×${dimensions.height}, ${result.frames} frames${result.seconds ? `, ${result.seconds.toFixed(1)}s` : ''}`;
+          inksBeforeMediaPalette = null;
+          refreshBase();
           refreshExportSourceSize();
           toast(`Media baked at source aspect (${dimensions.width}×${dimensions.height})`);
           dismissFirstRun();
@@ -819,6 +820,7 @@ export function mountApp(root: HTMLElement): void {
       }, mediaFit(), mediaScale());
       if (result.seconds > 0) setDuration(Math.min(20, Math.max(2, result.seconds)));
       await captureUnderlay(file);
+      inksBeforeMediaPalette = null;
       state.mapper.colorMode = 'source';
       colorModeSelect.value = 'source';
       refreshBase();

@@ -95,12 +95,12 @@ export function assertExportBudget(
       throw new Error('Export dimensions are too large. Reduce columns, cell size, or export scale');
     }
     if (format !== 'png' && pixels * frames > MAX_RASTER_PIXEL_FRAMES) {
-      throw new Error('This animation is too demanding to export safely. Reduce scale, FPS, or loop duration');
+      throw new Error('This animation is too demanding to export safely. Reduce scale, FPS, or duration');
     }
     return;
   }
 
   if (state.cols * rows * frames > MAX_TEXT_CELL_FRAMES) {
-    throw new Error('This animation contains too many character cells. Reduce columns, FPS, or loop duration');
+    throw new Error('This animation contains too many character cells. Reduce columns, FPS, or duration');
   }
 }
